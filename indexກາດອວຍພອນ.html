@@ -22,7 +22,27 @@
         width: 100vw;
     }
 
-    /* ---------------- 1. ໜ້າຊອງກາດ (Envelope Screen) ---------------- */
+    #music-control {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #fff;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.3rem;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    /* ---------------- 1. ໜ້າຊອງກາດ ---------------- */
     #envelope-screen {
         position: absolute;
         inset: 0;
@@ -47,7 +67,6 @@
         text-align: center;
     }
 
-    /* ຕົວຊອງຈົດໝາຍມີການດຶງດູດ */
     .envelope {
         width: 290px;
         height: 195px;
@@ -67,7 +86,6 @@
         50% { transform: translateY(-10px) scale(1.03); }
     }
 
-    /* ຝາຊອງຈົດໝາຍ */
     .envelope::before {
         content: '';
         position: absolute;
@@ -111,7 +129,7 @@
         letter-spacing: 1px;
     }
 
-    /* ---------------- 2. ໜ້າກາດ 3D + ລູກຫຼິ້ນ (Card Content Screen) ---------------- */
+    /* ---------------- 2. ໜ້າກາດ 3D ---------------- */
     #card-screen {
         position: absolute;
         inset: 0;
@@ -172,7 +190,6 @@
         line-height: 1.6;
     }
 
-    /* ປຸ່ມກົດເພີ່ມຄວາມມ່ວນ */
     .interactive-btns {
         pointer-events: auto;
         display: flex;
@@ -191,20 +208,16 @@
         padding: 10px 22px;
         border-radius: 30px;
         box-shadow: 0 4px 15px rgba(255, 23, 68, 0.4);
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s;
     }
 
-    .fun-btn:active {
-        transform: scale(0.92);
-    }
+    .fun-btn:active { transform: scale(0.92); }
 
     .close-btn {
         background: rgba(255, 255, 255, 0.15);
         border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: none;
     }
 
-    /* Floating Heart Elements */
     .floating-heart {
         position: absolute;
         pointer-events: none;
@@ -231,8 +244,11 @@
 </head>
 <body>
 
-  <audio id="bg-music" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=sweet-love-111663.mp3" type="audio/mpeg">
+  <div id="music-control">🎵</div>
+
+  <!-- ດຶງໄຟລ໌ music.mp3 ທີ່ອັບໂຫຼດເທິງ GitHub -->
+  <audio id="bg-music" loop preload="auto">
+    <source src="music.mp3" type="audio/mpeg">
   </audio>
 
   <div id="envelope-screen">
@@ -271,8 +287,32 @@
     const closeBtn = document.getElementById('close-btn');
     const loveBtn = document.getElementById('love-btn');
     const bgMusic = document.getElementById('bg-music');
+    const musicBtn = document.getElementById('music-control');
 
-    // ເອັບເຟັກຫົວໃຈລອຍ
+    let isPlaying = false;
+
+    function playAudio() {
+        if (!bgMusic) return;
+        bgMusic.play().then(() => {
+            isPlaying = true;
+            musicBtn.innerText = "🔊";
+        }).catch(err => {
+            console.log("Audio play failed:", err);
+            isPlaying = false;
+            musicBtn.innerText = "🔇";
+        });
+    }
+
+    musicBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            bgMusic.pause();
+            isPlaying = false;
+            musicBtn.innerText = "🔇";
+        } else {
+            playAudio();
+        }
+    });
+
     function createHeart(x, y) {
         const hearts = ['💖', '❤️', '💕', '✨', '🌸', '🎉'];
         const heart = document.createElement('div');
@@ -282,20 +322,15 @@
         heart.style.top = `${y - 15}px`;
         document.body.appendChild(heart);
 
-        setTimeout(() => {
-            heart.remove();
-        }, 2000);
+        setTimeout(() => heart.remove(), 2000);
     }
 
-    // ເປີດກາດ + ຫຼິ້ນເພງ
-    openBtn.addEventListener('click', (e) => {
+    openBtn.addEventListener('click', () => {
         envelopeScreen.classList.add('hide');
         cardScreen.classList.add('show');
         
-        // ຫຼິ້ນເພງ
-        bgMusic.play().catch(() => {});
+        playAudio();
 
-        // ລະເບີດຫົວໃຈ
         for(let i = 0; i < 15; i++) {
             setTimeout(() => {
                 createHeart(window.innerWidth / 2 + (Math.random() - 0.5) * 200, window.innerHeight / 2 + (Math.random() - 0.5) * 200);
@@ -303,22 +338,22 @@
         }
     });
 
-    // ປຸ່ມສົ່ງຄວາມຮັກ
-    loveBtn.addEventListener('click', (e) => {
+    loveBtn.addEventListener('click', () => {
         const rect = loveBtn.getBoundingClientRect();
         for(let i = 0; i < 8; i++) {
             createHeart(rect.left + rect.width / 2 + (Math.random() - 0.5) * 60, rect.top);
         }
     });
 
-    // ປິດກາດ
     closeBtn.addEventListener('click', () => {
         cardScreen.classList.remove('show');
         envelopeScreen.classList.remove('hide');
         bgMusic.pause();
+        isPlaying = false;
+        musicBtn.innerText = "🎵";
     });
 
-    // ---------------- Three.js 3D ----------------
+    // ---------------- Three.js ----------------
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2500);
     camera.position.set(0, 13, 52);
@@ -353,7 +388,6 @@
 
     const particleTexture = createGlowTexture();
 
-    // ດາວລະຍິບລະຍັບ
     const starCount = 2200;
     const starGeo = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
@@ -378,7 +412,6 @@
     const starMesh = new THREE.Points(starGeo, starMat);
     scene.add(starMesh);
 
-    // ເສັ້ນ 2 ເສັ້ນໂຄ້ງໄຂ່ວັນ
     const lineCount = 2000;
     const lineGeo = new THREE.PlaneGeometry(0.35, 0.35);
     
@@ -477,4 +510,5 @@
     animate();
 </script>
 </body>
-</html>
+  </html>
+  
